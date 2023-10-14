@@ -11,6 +11,7 @@
 #include "keyboard.h"
 #include "display.h"
 
+
 struct emulator{
     struct memory memory;
     struct registers registers;
