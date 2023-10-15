@@ -4,7 +4,7 @@
 #include "common.h"
 
 struct display{
-    bool display[WINDOW_H*WINDOW_W];
+    bool display[WINDOW_W * WINDOW_H];
 };
 
 bool draw_sprite(struct display *display,int x,int y,const char *sprite, int size);

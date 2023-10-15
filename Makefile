@@ -1,4 +1,4 @@
-FILES=build/emulator.o build/common.o build/memory.o build/keyboard.o
+FILES=build/emulator.o build/common.o build/memory.o build/keyboard.o build/display.o
 INCLUDE=-Iinclude/
 LIBS_LINK=-Llibraries/ -lmingw32 -lSDL2 -lSDL2main
 
@@ -15,6 +15,9 @@ build/memory.o: src/memory.c
 	gcc $(INCLUDE) -g -c $< -o $@
 
 build/keyboard.o: src/keyboard.c
+	gcc $(INCLUDE) -g -c $< -o $@
+
+build/display.o: src/display.c
 	gcc $(INCLUDE) -g -c $< -o $@
 
 clean:

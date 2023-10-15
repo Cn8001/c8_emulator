@@ -1,5 +1,6 @@
 #include "emulator.h"
 #include "common.h"
+#include "display.h"
 
 #define SDL_MAIN_HANDLED
 #include "SDL2/SDL.h"
