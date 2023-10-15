@@ -1,13 +1,13 @@
 #include "display.h"
-#include "common.h"
-#include <memory.h>
+#include <string.h>
+#include <stdio.h>
 #include <stdbool.h>
 
 bool pixel_is_set(struct display *display,int x,int y){
-    return display->display[(y%WINDOW_H)*WINDOW_H+(x%WINDOW_H)];
+    return display->display[(y%WINDOW_H)*WINDOW_W+(x%WINDOW_W)];
 }
 
-void clear_screen(struct display *display){
+void clear_screen_buffer(struct display *display){
     memset(display->display,0,sizeof(display->display));
 }
 
@@ -25,12 +25,13 @@ bool draw_sprite(struct display *display,int x,int y,const char *sprite, int siz
         for(int j=0;j<__CHAR_BIT__;j++){
 
             //For collisions we used % operator.
-            pos = (((y+i)%WINDOW_H)*WINDOW_H)+((x+j)%WINDOW_W);
+            pos = ((((y+i)%WINDOW_H)*WINDOW_W)+((x+j)%WINDOW_W));
             char pixel;
 
             //IF pixel = 0, continue.
-            if((pixel = col & (0b10000000 >> j)) == 0)
+            if((pixel = col & (0b10000000 >> j)) == 0){
                 continue;
+            }
             
             //return true if any pixel collided.
             if(pixel_is_set(display,x,y))

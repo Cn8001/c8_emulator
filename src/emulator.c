@@ -32,64 +32,48 @@ const char init_sprites[] = {
         0xf0,0x80,0xf0,0x80,0x80  // F
 };
 
-int load_program(char *);
+int load_program(char *),init(),handle_events(SDL_Event*);
+void draw_screen(),intro();
 
 int main(int argc, char *argv[]){
     if(argc < 2){
         printf("[ERROR] Usage: %s <path to program>\n",argv[0]);
         exit(-1);
     }
-    int res,init();
+    SDL_Event e;
+    int qsignal=1,intro_v=1,res;
 
+    /*Initialize*/
     res = init();
     
+    /*Load program*/
     res = load_program(argv[1]);
+
     /*Game loop*/
-    SDL_Event e;
-    while(1){
-        while(SDL_PollEvent(&e)){
-            switch (e.type)
-            {
-            case SDL_QUIT:
-                goto quit;
-            break;
-            case SDL_KEYDOWN:{
-                int key = e.key.keysym.sym;
-                int vkey;
-                if((vkey = keyboard_button_index(key,emulator->keyboard.map)) >=0)
-                    keyboardClick(&emulator->keyboard,vkey);
-            };
-            break;
-            case SDL_KEYUP:{
-                int key = e.key.keysym.sym;
-                int vkey;
-                if((vkey = keyboard_button_index(key,emulator->keyboard.map)) >=0)
-                    keyboardUp(&emulator->keyboard,vkey);
-            };
-            break;
-            default:
-                break;
-            }
+    while(qsignal){
+        /*Handle interrupts*/
+        qsignal = handle_events(&e);
+
+        clear_screen_buffer(&emulator->display);
+        if(intro_v){
+            intro();
+            intro_v=0;
+            Sleep(1000);
+            emulator->registers.ST = 20;
         }
-
-        SDL_SetRenderDrawColor(renderer,0,0,0,255);
-        SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer,255,255,255,255);
-        
-        /*Draw things here*/
-
+        /*Draw*/
+        draw_screen();
         SDL_ShowWindow(window);
 
         /*Delay timer and sound timer*/
         if(emulator->registers.DT-- > 0)
             Sleep(3);
         if(emulator->registers.ST > 0){
-            Beep(6000,5 * emulator->registers.ST);
+            Beep(4000,10 * emulator->registers.ST);
             emulator->registers.ST =0;
         }
     }
 
-quit:
     SDL_DestroyWindow(window);
     free(emulator);
     return res;
@@ -144,10 +128,74 @@ int load_program(char *filename){
     memcpy(&emulator->memory.memory[PROGRAM_START_ADDR],buffer,size);
 
     free(buffer);
+    fclose(f);
 
     /*For debug purpose*/
     #if defined(DEBUG)
     printf("[DEBUG] The program %s has size %d and copied to addr started from 0x%x\n",filename,size,PROGRAM_START_ADDR);
     #endif
     return 0;
+}
+
+void draw_screen(){
+    int x,y;
+
+    SDL_SetRenderDrawColor(renderer,0,0,0,255);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer,255,255,255,255);
+
+    for(y=0;y<WINDOW_H;y++){
+        for(x=0;x<WINDOW_W;x++){
+            if(pixel_is_set(&emulator->display,x,y)){
+                /*Basically r is a big pixel Width=10 H=10*/
+                struct SDL_Rect r;
+                r.w = WINDOW_MULT;
+                r.h = WINDOW_MULT;
+                r.x = x*WINDOW_MULT;
+                r.y = y*WINDOW_MULT;
+
+                SDL_RenderFillRect(renderer,&r);
+            }
+        }
+    }
+
+    SDL_RenderPresent(renderer);
+}
+
+int handle_events(SDL_Event *e){
+    while(SDL_PollEvent(e)){
+        switch (e->type){
+            case SDL_QUIT:
+                return 0;
+            break;
+
+            case SDL_KEYDOWN:
+            {
+                int key = e->key.keysym.sym;
+                int vkey;
+                if((vkey = keyboard_button_index(key,emulator->keyboard.map)) >=0)
+                    keyboardClick(&emulator->keyboard,vkey);
+            };
+            break;
+
+            case SDL_KEYUP:
+            {
+                int key = e->key.keysym.sym;
+                int vkey;
+                if((vkey = keyboard_button_index(key,emulator->keyboard.map)) >=0)
+                    keyboardUp(&emulator->keyboard,vkey);
+            };
+            break;
+
+            default:
+                break;
+        }
+    }
+    return 1;
+}
+
+void intro(){
+    draw_sprite(&emulator->display,26,14,&emulator->memory.memory[0x3C],5);
+    draw_sprite(&emulator->display,31,14,&emulator->memory.memory[0x41],5);
+    draw_screen();
 }
